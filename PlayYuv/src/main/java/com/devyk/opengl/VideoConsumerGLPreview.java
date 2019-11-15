@@ -96,8 +96,18 @@ public class VideoConsumerGLPreview extends GLSurfaceView implements GLSurfaceVi
     private boolean mFullScreenRequired;
     private String TAG = this.getClass().getSimpleName();
 
+
     /**
-     *
+     * Y 分量
+     */
+    private ByteBuffer yByteBuffer = ByteBuffer.allocateDirect(1280 * 720);
+
+    /**
+     * uv 分量
+     */
+    private ByteBuffer uvByteBuffer = ByteBuffer.allocateDirect(1280 * 720 >> 1);
+
+    /**
      * @param context
      * @param fullScreenRequired 是否全屏
      * @param buffer             传入的 buffer
@@ -148,6 +158,7 @@ public class VideoConsumerGLPreview extends GLSurfaceView implements GLSurfaceVi
 
 
     public void setBuffer(ByteBuffer buffer, int bufferWidth, int bufferHeight) {
+
         mBuffer = buffer;
         mBufferWidthY = bufferWidth;
         mBufferHeightY = bufferHeight;
@@ -158,6 +169,22 @@ public class VideoConsumerGLPreview extends GLSurfaceView implements GLSurfaceVi
         mBufferPositionY = 0;
         mBufferPositionU = (mBufferWidthY * mBufferHeightY);
         mBufferPositionV = (mBufferPositionU + (mBufferWidthUV * mBufferHeightUV));
+
+
+
+    }
+
+
+
+
+    public void setNV21Buffer(byte [] buffer, int bufferWidth, int bufferHeight) {
+
+        int len =(buffer.length<<1)/3;
+        yByteBuffer.rewind();
+        uvByteBuffer.rewind();
+        yByteBuffer.put(buffer,0,len).position(0);
+        uvByteBuffer.put(buffer,len,len>>1).position(0);
+
     }
 
     public boolean isReady() {
@@ -184,16 +211,19 @@ public class VideoConsumerGLPreview extends GLSurfaceView implements GLSurfaceVi
 
         if (mBuffer != null) {
             synchronized (this) {
+                 //y
                 GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureY[0]);
                 GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, mBufferWidthY, mBufferHeightY, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, mBuffer.position(mBufferPositionY));
                 GLES20.glUniform1i(muSamplerYHandle, 0);
 
+                 //u
                 GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureU[0]);
                 GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, mBufferWidthUV, mBufferHeightUV, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, mBuffer.position(mBufferPositionU));
                 GLES20.glUniform1i(muSamplerUHandle, 1);
 
+                //v
                 GLES20.glActiveTexture(GLES20.GL_TEXTURE2);
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureV[0]);
                 GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, mBufferWidthUV, mBufferHeightUV, 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, mBuffer.position(mBufferPositionV));

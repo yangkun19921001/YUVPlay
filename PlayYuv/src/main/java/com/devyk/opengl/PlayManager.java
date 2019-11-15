@@ -111,12 +111,12 @@ public class PlayManager {
     /**
      * 开始播放
      *
-     * @param nv21
+     * @param i420
      */
-    public void startPlay(byte[] nv21) {
+    public void startPlay(byte[] i420) {
         checkControl();
         mByteBuffer.rewind();
-        mByteBuffer.put(nv21);
+        mByteBuffer.put(i420);
         videoConsumerGLPreview.setBuffer(mByteBuffer, previewWidth, previewHeight);
         videoConsumerGLPreview.setIsRequestRender(true);
         videoConsumerGLPreview.requestRender();
@@ -135,9 +135,11 @@ public class PlayManager {
      * 销毁
      */
     public void onDestory() {
-        checkControl();
-        bindPlayControl.removeView(videoConsumerGLPreview);
+        removePlayControl();
         videoConsumerGLPreview.setIsRequestRender(false);
     }
+
+
+
 
 }

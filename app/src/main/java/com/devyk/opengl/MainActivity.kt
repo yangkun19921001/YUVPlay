@@ -29,10 +29,6 @@ class MainActivity : AppCompatActivity(), Camera.PreviewCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-
-
-
         initPlay();
         addHolderCallback()
     }
@@ -106,7 +102,7 @@ class MainActivity : AppCompatActivity(), Camera.PreviewCallback {
                 addCallbackBuffer(mBuffer)
                 setPreviewCallbackWithBuffer(this@MainActivity)
                 setPreviewDisplay(mSurfaceHolder)
-//                setDisplayOrientation(0)
+                setDisplayOrientation(90)
                 startPreview()//开始预览
             }
         } catch (e: Exception) {
@@ -114,15 +110,17 @@ class MainActivity : AppCompatActivity(), Camera.PreviewCallback {
         }
     }
 
-    private lateinit var mVideoFrame: ByteBuffer
 
-
+private lateinit var i420 :ByteArray
     /**
      * 预览回调
      */
     override fun onPreviewFrame(data: ByteArray, camera: Camera?) {
-        mPlayManager?.startPlay(data)
+//        i420 = ByteArray(data.size)
 
+        //传入 YUV 数据开始预览
+//        YuvUtil.convertNV21ToI420(data,i420,mPreviewWidth,mPreviewHeight);
+        mPlayManager?.startPlay(data)
         camera?.addCallbackBuffer(mBuffer)
     }
 
@@ -170,6 +168,9 @@ class MainActivity : AppCompatActivity(), Camera.PreviewCallback {
         mCamera = null
     }
 
+    /**
+     * 找到一个最为合适的预览 size
+     */
     private fun calculateCameraFrameSize(supportedSizes: List<*>, maxAllowedWidth: Int, maxAllowedHeight: Int) {
         var calcWidth = 0
         var calcHeight = 0
@@ -197,6 +198,9 @@ class MainActivity : AppCompatActivity(), Camera.PreviewCallback {
         mPlayManager?.onDestory()
         super.onDestroy()
     }
+
+
+
 
 
 
