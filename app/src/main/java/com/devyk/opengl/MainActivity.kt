@@ -17,11 +17,12 @@ class MainActivity : AppCompatActivity(), Camera.PreviewCallback {
     }
 
     private var mCamera: Camera? = null
+
     // 设定默认的预览宽高
     private var mPreviewWidth = 1280
     private var mPreviewHeight = 720
 
-    private lateinit var mBuffer:ByteArray
+    private lateinit var mBuffer: ByteArray
 
     private lateinit var mPlayManager: PlayManager
 
@@ -35,26 +36,26 @@ class MainActivity : AppCompatActivity(), Camera.PreviewCallback {
 
     private fun initPlay() {
         mPlayManager = PlayManager.PlayManagerBuilder().
-            /**
-             * 预览的宽
-             */
-            withPreviewWidth(mPreviewWidth)
-            /**
-             * 预览的高
-             */
-            .withPreviewHeight(mPreviewHeight)
-            /**
-             * 必须传入一个 ViewGroup 框架会自动绑定播放控件
-             */
-            .bindPlayControl(play)
-            /**
-             * 是否开始播放，现在没有传入 byte 数据，最好设置为 false
-             */
-            .withRequestRender(false)
-            /**
-             * 通过 builder 构建播放管理类
-             */
-            .build(applicationContext)
+                /**
+                 * 预览的宽
+                 */
+        withPreviewWidth(mPreviewWidth)
+                /**
+                 * 预览的高
+                 */
+                .withPreviewHeight(mPreviewHeight)
+                /**
+                 * 必须传入一个 ViewGroup 框架会自动绑定播放控件
+                 */
+                .bindPlayControl(play)
+                /**
+                 * 是否开始播放，现在没有传入 byte 数据，最好设置为 false
+                 */
+                .withRequestRender(false)
+                /**
+                 * 通过 builder 构建播放管理类
+                 */
+                .build(applicationContext)
 
         /**
          * init 播放器
@@ -106,24 +107,37 @@ class MainActivity : AppCompatActivity(), Camera.PreviewCallback {
                 startPreview()//开始预览
             }
         } catch (e: Exception) {
-            Log.w(TAG, e.message)
+            e.message?.let { Log.w(TAG, it) }
         }
     }
 
 
-private lateinit var i420 :ByteArray
+    private lateinit var i420: ByteArray
+
     /**
      * 预览回调
      */
     override fun onPreviewFrame(data: ByteArray, camera: Camera?) {
-//        i420 = ByteArray(data.size)
-
         //传入 YUV 数据开始预览
-//        YuvUtil.convertNV21ToI420(data,i420,mPreviewWidth,mPreviewHeight);
-        mPlayManager?.startPlay(data)
+        mPlayManager?.setYUVI420(VideoUtils.NV21ToI420p(mPreviewWidth, mPreviewHeight, data))
         camera?.addCallbackBuffer(mBuffer)
     }
 
+    fun nv21ToI420(data: ByteArray, width: Int, height: Int): ByteArray? {
+        val ret = ByteArray(data.size)
+        val total = width * height
+        val bufferY = ByteBuffer.wrap(ret, 0, total)
+        val bufferU = ByteBuffer.wrap(ret, total, total / 4)
+        val bufferV = ByteBuffer.wrap(ret, total + total / 4, total / 4)
+        bufferY.put(data, 0, total)
+        var i = total
+        while (i < data.size) {
+            bufferV.put(data[i])
+            bufferU.put(data[i + 1])
+            i += 2
+        }
+        return ret
+    }
 
 
     /**
@@ -198,10 +212,6 @@ private lateinit var i420 :ByteArray
         mPlayManager?.onDestory()
         super.onDestroy()
     }
-
-
-
-
 
 
 }

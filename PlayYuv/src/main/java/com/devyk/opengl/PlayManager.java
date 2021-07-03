@@ -1,11 +1,8 @@
 package com.devyk.opengl;
 
 import android.content.Context;
-import android.view.View;
+import android.opengl.GLSurfaceView;
 import android.view.ViewGroup;
-
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
 
 /**
  * <pre>
@@ -32,7 +29,7 @@ public class PlayManager {
     /**
      * 播放控件
      */
-    private VideoConsumerGLPreview videoConsumerGLPreview;
+    private GLSurfaceView videoConsumerGLPreview;
     /**
      * 是否开始渲染
      */
@@ -41,7 +38,8 @@ public class PlayManager {
      * 上下文
      */
     private Context context;
-    private ByteBuffer mByteBuffer;
+
+    private I420Renderer mRenderer;
 
     private PlayManager() {
     }
@@ -98,9 +96,14 @@ public class PlayManager {
         if (previewWidth == -1 || previewHeight == -1)
             throw new RuntimeException("previewWidth or previewHeight is init ?");
         if (videoConsumerGLPreview != null) return;
-        videoConsumerGLPreview = new VideoConsumerGLPreview(context, true, null, previewWidth, previewHeight);
+        videoConsumerGLPreview = new GLSurfaceView(context);
+        videoConsumerGLPreview.setEGLContextClientVersion(3); // 设置OpenGL版本号
+        mRenderer = new I420Renderer(context);
+        videoConsumerGLPreview.setRenderer(mRenderer);
+        videoConsumerGLPreview.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY); // 设置渲染模式为仅当手动执行requestRender时才绘制
+        bindPlayControl.removeAllViews();
         bindPlayControl.addView(videoConsumerGLPreview);
-        mByteBuffer = ByteBuffer.allocateDirect(previewWidth * previewHeight * 3 / 2);
+
     }
 
     private void checkControl() {
@@ -113,15 +116,11 @@ public class PlayManager {
      *
      * @param i420
      */
-    public void startPlay(byte[] i420) {
+    public void setYUVI420(byte[] i420) {
         checkControl();
-        mByteBuffer.rewind();
-        mByteBuffer.put(i420);
-        videoConsumerGLPreview.setBuffer(mByteBuffer, previewWidth, previewHeight);
-        videoConsumerGLPreview.setIsRequestRender(true);
-        videoConsumerGLPreview.requestRender();
+        mRenderer.setYuvData(i420, this.previewWidth, this.previewHeight);
+        videoConsumerGLPreview.requestRender(); // 手动触发渲染
     }
-
 
     /**
      * 删除播放 YUV 的控件
@@ -135,11 +134,11 @@ public class PlayManager {
      * 销毁
      */
     public void onDestory() {
-        removePlayControl();
-        videoConsumerGLPreview.setIsRequestRender(false);
+        try {
+            removePlayControl();
+        } catch (Error error) {
+            error.printStackTrace();
+        }
     }
-
-
-
 
 }
