@@ -122,24 +122,6 @@ class MainActivity : AppCompatActivity(), Camera.PreviewCallback {
         mPlayManager?.setYUVI420(VideoUtils.NV21ToI420p(mPreviewWidth, mPreviewHeight, data))
         camera?.addCallbackBuffer(mBuffer)
     }
-
-    fun nv21ToI420(data: ByteArray, width: Int, height: Int): ByteArray? {
-        val ret = ByteArray(data.size)
-        val total = width * height
-        val bufferY = ByteBuffer.wrap(ret, 0, total)
-        val bufferU = ByteBuffer.wrap(ret, total, total / 4)
-        val bufferV = ByteBuffer.wrap(ret, total + total / 4, total / 4)
-        bufferY.put(data, 0, total)
-        var i = total
-        while (i < data.size) {
-            bufferV.put(data[i])
-            bufferU.put(data[i + 1])
-            i += 2
-        }
-        return ret
-    }
-
-
     /**
      * 打开Camera
      */
